@@ -1,0 +1,138 @@
+﻿<!-- Created By Samuel McCorkel, A simple black Jack text based game -->
+@page "/"
+@inject IJSRuntime JSRuntime
+@using Project_Blackjack
+<PageTitle>Index</PageTitle>
+
+<h1>BlackJack Game</h1>
+<!-- Welcome message -->
+Welcome, this app allows the user to test there BlackJack playing skills!!!!!
+
+<!-- Game initialization or display hands and buttons based on game state -->
+@if (dealerHand == null || playerHand == null)
+{
+    <!-- Start Game button -->
+    <button @onclick="StartGame">Start Game</button>
+}
+else
+{
+    <!-- Display Dealer's hand -->
+    <div class="hand">
+        <h4>Dealer</h4>
+        @foreach (var card in dealerHand.Cards)
+        {
+            <p>@card</p>
+        }
+        <p>Total: @dealerHand.GetHandValue()</p>
+    </div>
+    <!-- Display Player's hand -->
+    <div class="hand">
+        <h4>Player</h4>
+        @foreach (var card in playerHand.Cards)
+        {
+            <p>@card</p>
+        }
+        <p>Total: @playerHand.GetHandValue()</p>
+    </div>
+    <!-- Display Hit and Stand buttons or game result and Play Again button -->
+    @if (gameResult == null)
+    {
+        <!-- Hit and Stand buttons -->
+        <button @onclick="Hit">Hit</button>
+        <button @onclick="Stand">Stand</button>
+    }
+    else
+    {
+        <!-- Display game result and Play Again button -->
+        <h4>@gameResult</h4>
+        <button @onclick="StartGame">Play Again</button>
+    }
+}
+
+@code {
+    private Deck deck;
+    private Hand dealerHand;
+    private Hand playerHand;
+    private string gameResult;
+    /// <summary>
+    /// Starts a new game by initializing the deck and dealing cards to the player and dealer.
+    /// Has exception handleing in case of crash.
+    /// </summary>
+    private async Task StartGame()
+    {
+        try
+        {
+            deck = new Deck();
+            dealerHand = new Hand();
+            playerHand = new Hand();
+            gameResult = null;
+
+            playerHand.AddCard(deck.DrawCard());
+            playerHand.AddCard(deck.DrawCard());
+
+            dealerHand.AddCard(deck.DrawCard());
+            dealerHand.AddCard(deck.DrawCard());
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"An error occurred: {ex.Message}");
+        }
+    }
+    /// <summary>
+    /// Adds a card to the player's hand and checks if the player busts.
+    /// Has exception handleing in case of crash.
+    /// </summary>
+    private async Task Hit()
+    {
+        try
+        {
+            playerHand.AddCard(deck.DrawCard());
+
+            if (playerHand.GetHandValue() > 21)
+            {
+                gameResult = "Player Busts!";
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"An error occurred: {ex.Message}");
+        }
+    }
+    /// <summary>
+    /// Completes the dealer's hand and determines the game result.
+    /// Has exception handleing in case of crash.
+    /// </summary>
+    private async Task Stand()
+    {
+        try
+        {
+            while (dealerHand.GetHandValue() < 17)
+            {
+                dealerHand.AddCard(deck.DrawCard());
+            }
+
+            if (dealerHand.GetHandValue() > 21)
+            {
+                gameResult = "Dealer Busts!";
+            }
+            else if (playerHand.GetHandValue() > dealerHand.GetHandValue())
+            {
+                gameResult = "Player Wins!";
+            }
+            else if (playerHand.GetHandValue() < dealerHand.GetHandValue())
+            {
+                gameResult = "Dealer Wins!";
+            }
+            else
+            {
+                gameResult = "It's a Tie!";
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"An error occurred: {ex.Message}");
+        }
+    }
+}
+
+
